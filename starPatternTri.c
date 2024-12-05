@@ -15,11 +15,11 @@
 int main(){
    int row,k,n,star;
    printf("Enter the number to print star pattern\n");
-   //scanf("%d",&n);
+   scanf("%d",&n);
    
-   for(row=1;row<=9;row++){
-         if(row>5){
-              for(k=1;k<=10-row;k++){
+   for(row=1;row<=n;row++){
+         if(row>n/2){
+              for(k=1;k<=(n+1)-row;k++){
                   printf("* ");
               }
      
@@ -36,4 +36,5 @@ int main(){
       }
       return 0;
    }
+   
    
