@@ -1,4 +1,4 @@
-// a to the power b
+// a to the power b using recursion
 #include<stdio.h>
 int exp(int a,int b);
 int main(){
