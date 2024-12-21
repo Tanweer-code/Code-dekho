@@ -11,7 +11,7 @@ int main(){
 return 0;
 }
 int dig(int a){
-  if(a<=9){
+  if(a>=-9&&a<=9){
     return 1;
   }else{
     return 1+dig(a/10);
