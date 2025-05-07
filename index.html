@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EknazarSirat</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.22.9/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // Firebase Configuration (You need to replace with your own Firebase config after setting up a project)
+   // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDwvXcScQcqA_SqbVp7FVUINexL2GMfXTI",
+  authDomain: "eknazarsirat.firebaseapp.com",
+  projectId: "eknazarsirat",
+  storageBucket: "eknazarsirat.firebasestorage.app",
+  messagingSenderId: "672360998928",
+  appId: "1:672360998928:web:6e8d46a21b1ae9c1298295",
+  measurementId: "G-ERRRSKR8RB"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Main App Component
+    function App() {
+      const [isLoggedIn, setIsLoggedIn] = useState(false);
+      const [email, setEmail] = useState("");
+      const [password, setPassword] = useState("");
+      const [students, setStudents] = useState([]);
+      const [teachers, setTeachers] = useState([]);
+      const [ledger, setLedger] = useState([]);
+      const [newStudent, setNewStudent] = useState({ name: "", fees: 0, tests: [] });
+      const [newTeacher, setNewTeacher] = useState({ name: "", dues: 0 });
+      const [newLedgerEntry, setNewLedgerEntry] = useState({ description: "", amount: 0 });
+
+      // Check if admin is logged in
+      useEffect(() => {
+        auth.onAuthStateChanged(user => {
+          if (user) setIsLoggedIn(true);
+          else setIsLoggedIn(false);
+        });
+      }, []);
+
+      // Fetch data from Firestore
+      useEffect(() => {
+        if (isLoggedIn) {
+          db.collection("students").onSnapshot(snapshot => {
+            setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          });
+          db.collection("teachers").onSnapshot(snapshot => {
+            setTeachers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          });
+          db.collection("ledger").onSnapshot(snapshot => {
+            setLedger(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+          });
+        }
+      }, [isLoggedIn]);
+
+      // Handle Login
+      const handleLogin = () => {
+        auth.signInWithEmailAndPassword(email, password)
+          .then(() => setIsLoggedIn(true))
+          .catch(err => alert("Login Failed: " + err.message));
+      };
+
+      // Handle Logout
+      const handleLogout = () => {
+        auth.signOut();
+      };
+
+      // Add Student
+      const addStudent = () => {
+        db.collection("students").add(newStudent);
+        setNewStudent({ name: "", fees: 0, tests: [] });
+      };
+
+      // Add Teacher
+      const addTeacher = () => {
+        db.collection("teachers").add(newTeacher);
+        setNewTeacher({ name: "", dues: 0 });
+      };
+
+      // Add Ledger Entry
+      const addLedgerEntry = () => {
+        db.collection("ledger").add(newLedgerEntry);
+        setNewLedgerEntry({ description: "", amount: 0 });
+      };
+
+      // Add Test to Student
+      const addTest = (studentId, testScore) => {
+        db.collection("students").doc(studentId).update({
+          tests: firebase.firestore.FieldValue.arrayUnion(testScore)
+        });
+      };
+
+      if (!isLoggedIn) {
+        return (
+          <div className="min-h-screen bg-gradient-to-r from-purple-400 to-blue-500 flex items-center justify-center">
+            <div className="bg-white p-8 rounded-lg shadow-lg w-96">
+              <img src="https://i.postimg.cc/Fsf9yPdB/logo-seerat.png" alt="EknazarSirat Logo" className="mx-auto mb-4 w-32" />
+              <h1 className="text-3xl font-bold text-center mb-6">EknazarSirat</h1>
+              <h2 className="text-xl font-semibold mb-4">Admin Login</h2>
+              <input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                className="w-full p-2 mb-4 border rounded"
+              />
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                className="w-full p-2 mb-4 border rounded"
+              />
+              <button onClick={handleLogin} className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                Login
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen bg-gray-100">
+          <header className="bg-gradient-to-r from-purple-400 to-blue-500 p-4 flex justify-between items-center">
+            <div className="flex items-center">
+              <img src="https://i.imgur.com/your-logo-url.png" alt="EknazarSirat Logo" className="w-16 mr-4" />
+              <h1 className="text-2xl font-bold text-white">EknazarSirat</h1>
+            </div>
+            <button onClick={handleLogout} className="bg-red-500 text-white p-2 rounded hover:bg-red-600">
+              Logout
+            </button>
+          </header>
+          <div className="p-6">
+            {/* Student Management */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Manage Students</h2>
+              <div className="flex mb-4">
+                <input
+                  type="text"
+                  placeholder="Student Name"
+                  value={newStudent.name}
+                  onChange={e => setNewStudent({ ...newStudent, name: e.target.value })}
+                  className="p-2 border rounded mr-2"
+                />
+                <input
+                  type="number"
+                  placeholder="Fees"
+                  value={newStudent.fees}
+                  onChange={e => setNewStudent({ ...newStudent, fees: Number(e.target.value) })}
+                  className="p-2 border rounded mr-2"
+                />
+                <button onClick={addStudent} className="bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                  Add Student
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {students.map(student => (
+                  <div key={student.id} className="bg-white p-4 rounded-lg shadow">
+                    <h3 className="font-semibold">{student.name}</h3>
+                    <p>Fees: ₹{student.fees}</p>
+                    <p>Tests: {student.tests.join(", ") || "No tests"}</p>
+                    <input
+                      type="number"
+                      placeholder="Add Test Score"
+                      id={`test-${student.id}`}
+                      className="p-2 border rounded mr-2"
+                    />
+                    <button
+                      onClick={() => addTest(student.id, Number(document.getElementById(`test-${student.id}`).value))}
+                      className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+                    >
+                      Add Test
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Teacher Management */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4">Manage Teachers</h2>
+              <div className="flex mb-4">
+                <input
+                  type="text"
+                  placeholder="Teacher Name"
+                  value={newTeacher.name}
+                  onChange={e => setNewTeacher({ ...newTeacher, name: e.target.value })}
+                  className="p-2 border rounded mr-2"
+                />
+                <input
+                  type="number"
+                  placeholder="Dues"
+                  value={newTeacher.dues}
+                  onChange={e => setNewTeacher({ ...newTeacher, dues: Number(e.target.value) })}
+                  className="p-2 border rounded mr-2"
+                />
+                <button onClick={addTeacher} className="bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                  Add Teacher
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {teachers.map(teacher => (
+                  <div key={teacher.id} className="bg-white p-4 rounded-lg shadow">
+                    <h3 className="font-semibold">{teacher.name}</h3>
+                    <p>Dues: ₹{teacher.dues}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Ledger Book */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Ledger Book</h2>
+              <div className="flex mb-4">
+                <input
+                  type="text"
+                  placeholder="Description"
+                  value={newLedgerEntry.description}
+                  onChange={e => setNewLedgerEntry({ ...newLedgerEntry, description: e.target.value })}
+                  className="p-2 border rounded mr-2"
+                />
+                <input
+                  type="number"
+                  placeholder="Amount"
+                  value={newLedgerEntry.amount}
+                  onChange={e => setNewLedgerEntry({ ...newLedgerEntry, amount: Number(e.target.value) })}
+                  className="p-2 border rounded mr-2"
+                />
+                <button onClick={addLedgerEntry} className="bg-green-500 text-white p-2 rounded hover:bg-green-600">
+                  Add Entry
+                </button>
+              </div>
+              <table className="w-full bg-white rounded-lg shadow">
+                <thead>
+                  <tr>
+                    <th className="p-2 border">Description</th>
+                    <th className="p-2 border">Amount (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ledger.map(entry => (
+                    <tr key={entry.id}>
+                      <td className="p-2 border">{entry.description}</td>
+                      <td className="p-2 border">{entry.amount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Render the App
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
